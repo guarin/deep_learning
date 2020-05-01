@@ -1,3 +1,8 @@
+"""Modules for custom deep learning framework
+
+Modules mirror the syntax from pytorch
+"""
+
 from torch import empty
 from torch import empty_like
 from framework import function
@@ -5,6 +10,17 @@ from framework import util
 
 
 class Parameter:
+	"""Parameter of a Module
+
+	Attributes
+	----------
+	name : str
+			Name of the parameter
+	value : Tensor (n, m)
+			Value of the parameter
+	gradient : Tensor (n, m)
+			Gradient of the parameter
+	"""
 
 	def __init__(self, value, name=None):
 		self.name = name
@@ -16,6 +32,7 @@ class Parameter:
 
 
 class Module:
+	"""Base class for all modules"""
 
 	def forward(self, input):
 		raise NotImplementedError
@@ -24,14 +41,18 @@ class Module:
 		raise NotImplementedError
 
 	def parameters(self, recurse=True):
+		"""Iterator over model parameters"""
 		return iter(())
 
 	def zero_grad(self):
+		"""Runs zero_grad on all parameters in the module"""
 		for parameter in self.parameters():
 			parameter.gradient.zero_()
 
 
 class Linear(Module):
+	"""Fully connected layer using Xavier normal initialization"""
+	# TODO: should allow to pass depth to xavier initialization
 
 	def __init__(self, in_size, out_size):
 		weight = function.xavier_normal_(empty(out_size, in_size))
@@ -55,6 +76,7 @@ class Linear(Module):
 
 
 class ReLU(Module):
+	"""Rectified Linear Unit"""
 
 	def forward(self, input):
 		self._input = input
@@ -75,6 +97,13 @@ class Tanh(Module):
 
 
 class Sequential(Module):
+	"""Sequential module
+
+	Attributes
+	----------
+	modules : List(Module)
+	"""
+
 	def __init__(self, *modules):
 		self.modules = modules
 
@@ -109,11 +138,17 @@ class LogSoftmax(Module):
 
 
 class Loss(Module):
+	"""Base class for all losses"""
+
 	def __call__(self, input, target):
 		return self.forward(input, target)
 
 
 class MSELoss(Loss):
+	"""Mean Squared Error Loss
+
+	Detects automatically one hot encoded inputs
+	"""
 
 	def forward(self, input, target):
 		if input.shape != target.shape:
@@ -140,6 +175,7 @@ class NLLLoss(Loss):
 
 
 class CrossEntropyLoss(Loss):
+	"""Cross Entropy Loss implemented as sequence of LogSoftmax layer followed by NLLLoss"""
 
 	def __init__(self):
 		self._log_softmax = LogSoftmax()
@@ -160,6 +196,8 @@ class CrossEntropyLoss(Loss):
 
 
 class Optimizer:
+	"""Base class for all optimizers"""
+
 	def __init__(self, parameters):
 		self.parameters = parameters
 
@@ -168,11 +206,14 @@ class Optimizer:
 
 
 class SGD(Optimizer):
+	"""Stochastic Gradient Descent supporting momentum"""
+
 	def __init__(self, parameters, learning_rate, momentum=0):
 		super().__init__(parameters)
 		self.learning_rate = learning_rate
 		self.momentum = momentum
 		if momentum > 0:
+			# initialize momentum for each parameter
 			self._momentum = [empty_like(p.value).zero_() for p in parameters()]
 
 	def step(self):
@@ -185,6 +226,8 @@ class SGD(Optimizer):
 
 
 class Adam(Optimizer):
+	"""Classic Adam implementation"""
+
 	def __init__(self, parameters, learning_rate=0.001, betas=(0.9, 0.999), eps=1e-08):
 		super().__init__(parameters)
 		self.learning_rate = learning_rate

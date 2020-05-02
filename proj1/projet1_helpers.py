@@ -1,20 +1,15 @@
 import torch
 from torch import nn
 from torch import optim
+import numpy as np
 
+import matplotlib.pyplot as plt
 
-def train_model(model, train_input, train_target, mini_batch_size):
-    criterion = nn.MSELoss()
-    optimizer = optim.SGD(model.parameters(), lr=1e-3)
-    for e in range(25):
-        sum_loss = 0
-        for b in range(0, train_input.size(0), mini_batch_size):
-            optimizer.zero_grad()
-            output = model(train_input.narrow(0, b, mini_batch_size))
-            loss = criterion(output, train_target.narrow(0, b, mini_batch_size))
-            sum_loss = sum_loss + loss.item()
-            loss.backward()
-            optimizer.step()
+def plot_performance (accuracies, n_iter):
+    x = np.linspace(0,n_iter,n_iter)
+    plt.plot(x,accuracies,'k-')
+    error = np.sqrt(np.var(accuracies))
+    plt.fill_between(x, accuracies-error, accuracies+error)
            
         
 ######################################################################################

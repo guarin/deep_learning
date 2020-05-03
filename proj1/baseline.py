@@ -4,7 +4,7 @@ from torch.nn import functional as F
 from torch import optim
 
 class MLP(nn.Module):
-    """ Modified LeNet. Takes input format 1 x 14 x 14 and outputs 10 classes one-hot encoded"""
+    """ Modified LeNet. Takes input format 2 x 14 x 14"""
     def __init__(self):
         super(MLP, self).__init__()
         self.classifier = nn.Sequential(

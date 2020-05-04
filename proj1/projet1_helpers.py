@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch import optim
 import numpy as np
+import pandas as pd
 
 import matplotlib.pyplot as plt
 
@@ -30,3 +31,8 @@ def plot_heatmap(classes,normalize):
     plt.xticks(np.arange(0.5, len(heat.columns), 1), heat.columns)
     plt.colorbar()
     plt.show()
+    
+def get_mis_class(model,input_,target,classes):
+    preds = model(input_).round() == target
+    misclassified = classes[~preds]
+    return misclassified.tolist()

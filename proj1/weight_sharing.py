@@ -55,7 +55,7 @@ def accuracy(model,inputs,targets):
 
 def train(model, train_input, train_target, mini_batch_size, verbose = False):
     criterion = nn.MSELoss()
-    optimizer = optim.SGD(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=1e-3)
     for e in range(25):
         sum_loss = 0
         for b in range(0, train_input.size(0), mini_batch_size):
@@ -67,3 +67,8 @@ def train(model, train_input, train_target, mini_batch_size, verbose = False):
             optimizer.step()
         if verbose:
             print(e,sum_loss)
+            
+def get_mis_class(model,input_,target,classes):
+    preds = model(input_).round() == target
+    misclassified = classes[~preds]
+    return misclassified.tolist()

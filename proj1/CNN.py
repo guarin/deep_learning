@@ -8,23 +8,20 @@ class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
         self.features = nn.Sequential(
-            nn.Conv2d(2, 12, kernel_size = 3),
+            nn.Conv2d(2, 32, kernel_size = 3),
             nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Conv2d(12, 32, kernel_size = 3),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(32, 64, kernel_size = 3),
             nn.ReLU(),
-            nn.MaxPool2d(2)
+            nn.MaxPool2d(kernel_size=2, stride=2)
 )
         self.classifier = nn.Sequential(
-            nn.Linear(128, 84),
+            nn.Dropout(),
+            nn.Linear(256, 120),
             nn.ReLU(inplace=True),
-            nn.Linear(84, 60),
+            nn.Linear(120,84),
             nn.ReLU(inplace=True),
-            nn.Linear(60, 10),
-            nn.ReLU(inplace=True),
-            nn.Linear(10, 5),
-            nn.ReLU(inplace=True),
-            nn.Linear(5, 2)
+            nn.Linear(84,2)
 )
     def forward(self, x):
         x = self.features(x)
@@ -33,8 +30,8 @@ class CNN(nn.Module):
         return x 
     
 def train(model, train_input, train_target, mini_batch_size, verbose = False):
-    criterion = nn.MSELoss()
-    optimizer = optim.SGD(model.parameters(), lr=1e-3)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=1e-3)
     for e in range(25):
         sum_loss = 0
         for b in range(0, train_input.size(0), mini_batch_size):
@@ -50,3 +47,8 @@ def train(model, train_input, train_target, mini_batch_size, verbose = False):
 
 def accuracy(preds, targets):
     return (preds.argmax(axis=1) == targets.argmax(axis=1)).long().sum().item() / targets.shape[0]
+
+def get_mis_class(model,input_,target,classes):
+    preds = model(input_).argmax(axis=1) == target
+    misclassified = classes[~preds]
+    return misclassified.tolist()

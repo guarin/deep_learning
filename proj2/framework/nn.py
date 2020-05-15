@@ -75,27 +75,6 @@ class Linear(Module):
 		yield self.bias
 
 
-class ReLU(Module):
-	"""Rectified Linear Unit"""
-
-	def forward(self, input):
-		self._input = input
-		return input * (input > 0).float()
-
-	def backward(self, gradient):
-		return (self._input > 0).float() * gradient
-
-
-class Tanh(Module):
-
-	def forward(self, input):
-		self._input = input
-		return function.tanh(input)
-
-	def backward(self, gradient):
-		return (1 - function.tanh(self._input).pow(2)) * gradient
-
-
 class Sequential(Module):
 	"""Sequential module
 
@@ -127,6 +106,29 @@ class Sequential(Module):
 			return iter(())
 
 
+class ReLU(Module):
+	"""Rectified Linear Unit"""
+
+	# TODO He initilization
+
+	def forward(self, input):
+		self._input = input
+		return input * (input > 0).float()
+
+	def backward(self, gradient):
+		return (self._input > 0).float() * gradient
+
+
+class Tanh(Module):
+
+	def forward(self, input):
+		self._input = input
+		return function.tanh(input)
+
+	def backward(self, gradient):
+		return (1 - function.tanh(self._input).pow(2)) * gradient
+
+
 class LogSoftmax(Module):
 
 	def forward(self, input):
@@ -140,6 +142,7 @@ class LogSoftmax(Module):
 class Loss(Module):
 	"""Base class for all losses"""
 
+	# allow loss modules to be called like loss(input, target)
 	def __call__(self, input, target):
 		return self.forward(input, target)
 
@@ -163,8 +166,10 @@ class MSELoss(Loss):
 class NLLLoss(Loss):
 
 	def forward(self, input, target):
+		"""Target is assumed to contain class indices"""
 		self._target = target
 		self._shape = input.shape
+		# gather selects only values in input at the indices given by target
 		return -input.gather(1, target.view(-1, 1)).mean()
 
 	def backward(self):
@@ -218,10 +223,11 @@ class SGD(Optimizer):
 
 	def step(self):
 		for i, parameter in enumerate(self.parameters()):
-			u = self.learning_rate * parameter.gradient
+			u = parameter.gradient
 			if self.momentum > 0:
 				u += self.momentum * self._momentum[i]
 				self._momentum[i].copy_(u)
+			u *= self.learning_rate
 			parameter.value -= u
 
 

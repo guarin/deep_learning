@@ -105,6 +105,7 @@ class TestLinear(ForwardBackwardTest):
         self.out_size = 4
         self.torch_module = torch.nn.Linear(self.in_size, self.out_size)
         self.module = nn.Linear(self.in_size, self.out_size)
+        # explicitly set parameters to identical values
         parameters_normal_(self.torch_module)
         parameters_normal_(self.module)
         super().setUp()

@@ -7,6 +7,7 @@ from torch import empty
 from torch import empty_like
 from framework import function
 from framework import util
+import math
 
 
 class Parameter:
@@ -68,11 +69,15 @@ class Module:
 
 class Linear(Module):
     """Fully connected layer using Xavier normal initialization"""
-    # TODO: should allow to pass depth to xavier initialization
 
-    def __init__(self, in_size, out_size):
+    initialization_gain = {
+        'Xavier': 1.0,
+        'He': math.sqrt(2)
+    }
+
+    def __init__(self, in_size, out_size, initilization='Xavier'):
         super().__init__()
-        weight = function.xavier_normal_(empty(out_size, in_size))
+        weight = function.xavier_normal_(empty(out_size, in_size), gain=self.initialization_gain[initilization])
         bias = empty(out_size).zero_()
         self.weight = Parameter(weight, 'weight')
         self.bias = Parameter(bias, 'bias')
@@ -159,8 +164,6 @@ class Dropout(Module):
 
 class ReLU(Module):
     """Rectified Linear Unit"""
-
-    # TODO He initilization
 
     def forward(self, input):
         self._input = input
@@ -265,7 +268,7 @@ class Optimizer:
 class SGD(Optimizer):
     """Stochastic Gradient Descent supporting momentum"""
 
-    def __init__(self, parameters, learning_rate, momentum=0):
+    def __init__(self, parameters, learning_rate=0.1, momentum=0):
         super().__init__(parameters)
         self.learning_rate = learning_rate
         self.momentum = momentum

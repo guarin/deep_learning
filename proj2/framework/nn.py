@@ -53,7 +53,7 @@ class Module:
         for parameter in self.parameters():
             parameter.gradient.zero_()
 
-    def train(self, mode):
+    def train(self, mode=True):
         """Sets the module into training mode = `mode`"""
         self.training = mode
         return self
@@ -72,12 +72,12 @@ class Linear(Module):
 
     initialization_gain = {
         'Xavier': 1.0,
-        'He': math.sqrt(2)
+        'He': math.sqrt(2.0)
     }
 
-    def __init__(self, in_size, out_size, initilization='Xavier'):
+    def __init__(self, in_size, out_size, initialization='Xavier'):
         super().__init__()
-        weight = function.xavier_normal_(empty(out_size, in_size), gain=self.initialization_gain[initilization])
+        weight = function.xavier_normal_(empty(out_size, in_size), gain=self.initialization_gain[initialization])
         bias = empty(out_size).zero_()
         self.weight = Parameter(weight, 'weight')
         self.bias = Parameter(bias, 'bias')
@@ -147,12 +147,12 @@ class Dropout(Module):
         super().__init__()
         from torch.distributions import Bernoulli
         self.p = p
-        self._bernoulli = Bernoulli(self.p)
+        self._bernoulli = Bernoulli(1 - self.p)
         self._sample = None
 
     def forward(self, input):
         if self.training:
-            self._sample = self._bernoulli.sample(input.shape) / (1 - self.p)
+            self._sample = self._bernoulli.sample(input.shape).float() / (1 - self.p)
             input = input * self._sample
         return input
 
@@ -238,6 +238,7 @@ class CrossEntropyLoss(Loss):
     """Cross Entropy Loss implemented as sequence of LogSoftmax layer followed by NLLLoss"""
 
     def __init__(self):
+        super().__init__()
         self._log_softmax = LogSoftmax()
         self._nllloss = NLLLoss()
 

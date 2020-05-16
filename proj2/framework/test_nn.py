@@ -111,20 +111,6 @@ class TestLinear(ForwardBackwardTest):
         super().setUp()
 
 
-class TestReLU(ForwardBackwardTest):
-    def setUp(self):
-        self.module = nn.ReLU()
-        self.torch_module = torch.nn.ReLU()
-        super().setUp()
-
-
-class TestTanh(ForwardBackwardTest):
-    def setUp(self):
-        self.torch_module = torch.nn.Tanh()
-        self.module = nn.Tanh()
-        super().setUp()
-
-
 class TestSequential(ForwardBackwardTest):
     def setUp(self):
         self.in_size = 5
@@ -140,6 +126,20 @@ class TestSequential(ForwardBackwardTest):
         )
         parameters_normal_(self.torch_module)
         parameters_normal_(self.module)
+        super().setUp()
+
+
+class TestReLU(ForwardBackwardTest):
+    def setUp(self):
+        self.module = nn.ReLU()
+        self.torch_module = torch.nn.ReLU()
+        super().setUp()
+
+
+class TestTanh(ForwardBackwardTest):
+    def setUp(self):
+        self.torch_module = torch.nn.Tanh()
+        self.module = nn.Tanh()
         super().setUp()
 
 

@@ -80,13 +80,16 @@ def train(model, criterion, optimizer, train_input, train_target, verbose=False,
 
 def batch_train(model, criterion, optimizer, train_input, train_target, epochs=250, batch_size=100, verbose=False, nb_errors=False):
     """Trains model in batch mode"""
+    results = []
     for epoch in range(epochs):
         epoch_results = []
         for train_batch, target_batch in split_batches(train_input, train_target, batch_size):
             train_result = train(model, criterion, optimizer, train_batch, target_batch)
             epoch_results.append(train_result)
         loss, prediction = concatenate_results(epoch_results)
+        results.append((loss, prediction))
         print_result(loss, prediction, train_target, verbose, nb_errors, epoch)
+    return results
 
 
 def test(model, criterion, test_input, test_target, verbose=False, nb_errors=False):

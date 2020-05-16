@@ -53,22 +53,16 @@ class Module:
             parameter.gradient.zero_()
 
     def train(self, mode):
-        """Returns whether module is in training mode.
-
-        If `train` is passed it sets the training mode.
-        """
+        """Sets the module into training mode = `mode`"""
         self.training = mode
         return self
 
     def eval(self):
-        """Sets the model to evaluation mode"""
+        """Sets the model into evaluation mode"""
         return self.train(False)
 
     def __call__(self, *args):
-        """Automatically calls the forward function when calling a module.
-
-        Example: module(input) is identical to module.forward(input)
-        """
+        """Allows module.forward(input) to be called like module(input)"""
         return self.forward(*args)
 
 
@@ -136,7 +130,7 @@ class Sequential(Module):
 
 
 class Dropout(Module):
-    """Dropout module, ignores activations with probability `p`
+    """Dropout module"
 
     Attributes
     ----------

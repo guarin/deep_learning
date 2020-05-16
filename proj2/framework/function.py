@@ -17,9 +17,8 @@ def softmax(x):
     return x_exp / x_exp.sum(1).view(-1, 1)
 
 
-def xavier_normal_(x, gain=1):
+def xavier_normal_(x, gain=1.0):
     """Xavier normal initialization"""
-    # for gain see https://pytorch.org/docs/stable/nn.init.html#torch.nn.init.calculate_gain
-    std = gain * math.sqrt(2.0/sum(x.shape))
+    std = gain * math.sqrt(6.0 / sum(x.shape))
     return x.normal_(0, std)
 

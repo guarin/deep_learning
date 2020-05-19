@@ -16,7 +16,6 @@ class CNN(nn.Module):
             nn.MaxPool2d(kernel_size=2, stride=2)
 )
         self.classifier = nn.Sequential(
-            nn.Dropout(),
             nn.Linear(256, 120),
             nn.ReLU(inplace=True),
             nn.Linear(120,84),
@@ -29,11 +28,12 @@ class CNN(nn.Module):
         x = self.classifier(x)
         return x 
     
-def train(model, train_input, train_target, mini_batch_size, verbose = False):
+def train(model, train_input, train_target, mini_batch_size ,verbose = False):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     for e in range(25):
         sum_loss = 0
+        sum_loss_val = 0
         for b in range(0, train_input.size(0), mini_batch_size):
             optimizer.zero_grad()
             output = model(train_input.narrow(0, b, mini_batch_size))
@@ -43,10 +43,16 @@ def train(model, train_input, train_target, mini_batch_size, verbose = False):
             optimizer.step()
         if verbose:
             print(e,sum_loss)
+    return sum_loss
         
 
+def get_loss_val(model, val_input,val_target):
+    criterion = nn.CrossEntropyLoss()
+    pred = model(val_input)
+    return criterion(pred, val_target)
+    
 def accuracy(preds, targets):
-    return (preds.argmax(axis=1) == targets.argmax(axis=1)).long().sum().item() / targets.shape[0]
+    return (preds.argmax(axis=1) == targets).long().sum().item() / targets.shape[0]
 
 def get_mis_class(model,input_,target,classes):
     preds = model(input_).argmax(axis=1) == target

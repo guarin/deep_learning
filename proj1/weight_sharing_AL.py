@@ -23,7 +23,8 @@ class LeNetLike(nn.Module):
             nn.Linear(120, 84),
             nn.ReLU(inplace=True),
             nn.Linear(84, 10),
-            nn.Softmax(dim=1)
+            nn.ReLU(inplace=True),
+            nn.Linear(10, 1)
 )
     def forward(self, input_):
         output = []
@@ -33,29 +34,38 @@ class LeNetLike(nn.Module):
             x = x.view(x.size(0), -1)
             x = self.classifier(x)
             output.append(x)
+        output = torch.sigmoid(output[1] - output[0]).squeeze()
         return output
     
 ######################################################################################
 
+
+# Accuracy for the baseline trains to get the classes then compare predicted class
+def accuracy(model,inputs,targets):
+    """ INPUT : 
+        - model: model that predicts the digit values 
+        - input_long: the input of the format 2000 x 10
+        - tagets: ground truth of the pairs comparaison with format 1000 """
+
+    # Predict class of inputs
+    preds = model(inputs).round()
+    # Compute accuracy
+    accuracy = (preds == targets).long().sum().item()/len(preds)
+    return accuracy 
+
+######################################################################################
+
 def aux_loss(output,classes,target,criterion):
     # loss of prediction of the two number
-    loss_1 = criterion(output[0], classes[:,0])
-    loss_2 = criterion(output[1],  classes[:,1])
-    
-    # loss of comparaison between the two. 
-    val_1 = (output[0] @ torch.arange(10).float()).unsqueeze(1)
-    val_2 = (output[1] @ torch.arange(10).float()).unsqueeze(1)
-    vals = torch.cat((val_2,val_1),1)
-    # normalize it 
-    vals = vals/torch.cat(2*[vals.sum(1).unsqueeze(1)],1)
-    loss_3 = criterion(vals,  target.long())
-    
-    return loss_1 + loss_2 + loss_3
+    weights = abs( classes[:,1] - classes[:,0])
+    loss = criterion(output,  target)
+    return (loss * weights).sum()
+
 
 ######################################################################################
 
 def train(model, train_input, train_classes, train_target, mini_batch_size, verbose = False):
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.MSELoss(reduction="none")
     optimizer = optim.Adam(model.parameters(), lr=5e-4)
     for e in range(25):
         sum_loss = 0
@@ -70,28 +80,10 @@ def train(model, train_input, train_classes, train_target, mini_batch_size, verb
             print(e,sum_loss)
     return sum_loss
             
-    
 ######################################################################################
-
-
-# Accuracy for the baseline trains to get the classes then compare predicted class
-def accuracy(model,inputs,targets):
-    """ INPUT : 
-        - model: model that predicts the digit values 
-        - input_long: the input of the format 2000 x 10
-        - tagets: ground truth of the pairs comparaison with format 1000 """
-    # Predict class of inputs
-    output = model(inputs)
-    preds = output[0].argmax(dim=1) <= output[1].argmax(dim=1)
-    # Compute accuracy
-    accuracy = (preds == targets).long().sum().item()/len(preds)
-    return accuracy 
-
-######################################################################################
-
+            
 def get_mis_class(model,input_,target,classes):
-    output = model(input_)
-    preds = output[0].argmax() <= output[1].argmax()
+    preds = model(input_).round() == target
     misclassified = classes[~preds]
     return misclassified.tolist()
 

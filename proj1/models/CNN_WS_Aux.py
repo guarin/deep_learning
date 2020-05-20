@@ -5,22 +5,15 @@ from torch import optim
 import proj1.projet1_helpers as helpers
 
 class LeNet_aux_loss(nn.Module):
-    # CNN with auxiliary loss only, separate weights for first and second image
+    # CNN with auxiliary loss and weight sharing
     def __init__(self):
         super(LeNet_aux_loss, self).__init__()
         #Layers image 1
-        self.conv1a = nn.Conv2d(1, 32, kernel_size=3)
-        self.conv2a = nn.Conv2d(32, 64, kernel_size=3)
-        self.fc1a = nn.Linear(256, 120)
-        self.fc2a = nn.Linear(120, 84)
-        self.fc3a = nn.Linear(84, 10)
-
-        #Layers image 2
-        self.conv1b = nn.Conv2d(1, 32, kernel_size=3)
-        self.conv2b = nn.Conv2d(32, 64, kernel_size=3)
-        self.fc1b = nn.Linear(256, 120)
-        self.fc2b = nn.Linear(120, 84)
-        self.fc3b = nn.Linear(84, 10)
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3)
+        self.fc1 = nn.Linear(256, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
 
         #Combining layers
         self.lin4 = nn.Linear(240,20)
@@ -28,18 +21,26 @@ class LeNet_aux_loss(nn.Module):
 
     def forward(self, x):
         # Image 1 class
-        h1a = F.relu(F.max_pool2d(self.conv1a(x[:,0,:,:].view(x.size(0),1,14,14)), kernel_size=2))
-        h2a = F.relu(F.max_pool2d(self.conv2a(h1a), kernel_size=2, stride=2))
-        h3a = F.relu((self.fc1a(h2a.view((-1, 256)))))
-        h4a = F.relu((self.fc2a(h3a)))
-        h5a = self.fc3a(h4a)
+        h1a = F.relu(F.max_pool2d(self.conv1(x[:,0,:,:].view(x.size(0),1,14,14)), kernel_size=2))
+        h1a = F.dropout2d(h1a, 0.7)
+        h2a = F.relu(F.max_pool2d(self.conv2(h1a), kernel_size=2, stride=2))
+        h2a = F.dropout2d(h3a, 0.7)
+        h3a = F.relu((self.fc1(h2a.view((-1, 256)))))
+        h3a = F.dropout(h3a, 0.7)
+        h4a = F.relu((self.fc2(h3a)))
+        h4a = F.dropout(h4a, 0.7)
+        h5a = self.fc3(h4a)
 
         # Image 2 class
-        h1b = F.relu(F.max_pool2d(self.conv1b(x[:,1,:,:].view(x.size(0),1,14,14)), kernel_size=2))
-        h2b = F.relu(F.max_pool2d(self.conv2b(h1b), kernel_size=2, stride=2))
-        h3b = F.relu((self.fc1b(h2b.view(-1,256))))
-        h4b = F.relu(self.fc2b(h3b))
-        h5b = self.fc3b(h4b)
+        h1b = F.relu(F.max_pool2d(self.conv1(x[:,1,:,:].view(x.size(0),1,14,14)), kernel_size=2))
+        h1b = F.dropout2d(h1b, 0.7)
+        h2b = F.relu(F.max_pool2d(self.conv2(h1b), kernel_size=2, stride=2))
+        h2b = F.dropout2d(h2b, 0.7)
+        h3b = F.relu((self.fc1(h2b.view(-1,256))))
+        h3b = F.dropout(h3b, 0.7)
+        h4b = F.relu(self.fc2(h3b))
+        h4b = F.dropout(h4b, 0.7)
+        h5b = self.fc3(h4b)
 
         # Classifiction
         y1 = F.relu(self.lin4(torch.cat((h3a.view(-1, 120), h3b.view(-1, 120)), 1)))

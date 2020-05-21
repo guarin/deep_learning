@@ -35,6 +35,7 @@ def plot_heatmap(classes,normalize):
     plt.xlabel('Second Value')
     plt.title("Misclassification per digit pairs")
     plt.colorbar(label = "Misclassification rate")
+    fig.savefig("Plots/Heatmap.png")
     plt.show()
     return heat,fig
 
@@ -45,7 +46,7 @@ def get_mis_class(model,input_,target,classes):
 
 def get_mis_class_aux(model, input_, target, classes):
     preds = model(input_)[0].round() == target
-    misclassified = classes[~~preds]
+    misclassified = classes[~preds]
     return  misclassified.tolist()
 
 def plotloss(losses,color):

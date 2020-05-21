@@ -22,24 +22,24 @@ class CNNrws(nn.Module):
     def forward(self, x):
         # Image 1 class
         h1a = F.relu(F.max_pool2d(self.conv1(x[:,0,:,:].view(x.size(0),1,14,14)), kernel_size=2))
-        #h1a = F.dropout2d(h1a, 0.3)
+        h1a = F.dropout2d(h1a, 0.3)
         h2a = F.relu(F.max_pool2d(self.conv2(h1a), kernel_size=2, stride=2))
-        #h2a = F.dropout2d(h2a, 0.3)
+        h2a = F.dropout2d(h2a, 0.3)
         h3a = F.relu(self.fc1(h2a.view((-1, 256))))
-        #h3a = F.dropout(h3a, 0.3)
+        h3a = F.dropout(h3a, 0.3)
         h4a = F.relu(self.fc2(h3a))
-        #h4a = F.dropout(h4a, 0.3)
+        h4a = F.dropout(h4a, 0.3)
 
 
         # Image 2 class
         h1b = F.relu(F.max_pool2d(self.conv1(x[:,1,:,:].view(x.size(0),1,14,14)), kernel_size=2))
-        #h1b = F.dropout2d(h1b, 0.3)
+        h1b = F.dropout2d(h1b, 0.3)
         h2b = F.relu(F.max_pool2d(self.conv2(h1b), kernel_size=2, stride=2))
-        #h2b = F.dropout2d(h2b, 0.3)
+        h2b = F.dropout2d(h2b, 0.3)
         h3b = F.relu((self.fc1(h2b.view(-1,256))))
-        #h3b = F.dropout(h3b, 0.3)
+        h3b = F.dropout(h3b, 0.3)
         h4b = F.relu(self.fc2(h3b))
-        #h4b = F.dropout(h4b, 0.3)
+        h4b = F.dropout(h4b, 0.3)
 
 
         # Classifiction
@@ -118,4 +118,6 @@ def train_all(train_input, train_target, train_classes, val_input, val_target, v
 
         print(f"Training accuracy is {train_accuracy} ")
         print(f"Validation accuracy is {val_accuracy} ")
+        pytorch_total_params = sum(p.numel() for p in model.parameters())
+    print(pytorch_total_params)
     return losses, losses_val, accuracies_train, accuracies_test, accuracies_val, all_classified, misclassified

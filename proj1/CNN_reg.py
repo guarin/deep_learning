@@ -12,19 +12,19 @@ class CNNr(nn.Module):
             nn.Conv2d(2, 32, kernel_size = 3),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Dropout2d(p=0.7),
+            nn.Dropout2d(p=0.3),
             nn.Conv2d(32, 64, kernel_size = 3),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Dropout2d(p=0.7)
+            nn.Dropout2d(p=0.3)
 )
         self.classifier = nn.Sequential(
             nn.Linear(256, 120),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.7),
+            nn.Dropout(p=0.3),
             nn.Linear(120,84),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.7),
+            nn.Dropout(p=0.3),
             nn.Linear(84,2)
 )
     def forward(self, x):
@@ -33,10 +33,12 @@ class CNNr(nn.Module):
         x = self.classifier(x)
         return x 
     
-def train(model, train_input, train_target, mini_batch_size, verbose = False):
+def train(model, train_input, train_target,val_input, val_target, mini_batch_size, nb_epochs = 25,verbose = False):
+    losses = np.zeros(nb_epochs)
+    val_losses = np.zeros(nb_epochs)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
-    for e in range(25):
+    for e in range(nb_epochs):
         sum_loss = 0
         for b in range(0, train_input.size(0), mini_batch_size):
             optimizer.zero_grad()
@@ -47,7 +49,9 @@ def train(model, train_input, train_target, mini_batch_size, verbose = False):
             optimizer.step()
         if verbose:
             print(e,sum_loss)
-    return sum_loss
+        losses[e] = sum_loss
+        val_losses[e] = get_loss_val(model.eval(), val_input, val_target)
+    return losses,val_losses
 
 def get_loss_val(model, val_input,val_target):
     criterion = nn.CrossEntropyLoss()
@@ -62,26 +66,22 @@ def get_mis_class(model,input_,target,classes):
     misclassified = classes[~preds]
     return misclassified.tolist()
 
-def train_all(train_input, train_target, train_classes, val_input, val_target, val_classes,test_input, test_target, test_classes, niter = 15, nround = 25,mini_batch_size = 100):
+def train_all(train_input, train_target, train_classes, val_input, val_target, val_classes,test_input, test_target, test_classes, niter = 15, nb_epochs = 25,mini_batch_size = 100):
 
     all_classified = []
     misclassified = []
     accuracies_train = []
     accuracies_test = []
     accuracies_val = []
-    losses = np.zeros((niter,nround))
-    losses_val = np.zeros((niter,nround))
-
+    losses = np.zeros((niter, nb_epochs))
+    losses_val = np.zeros((niter, nb_epochs))
     for i in range(niter):
         print("-"*50,f" \n Iteration {i} \n ")
 
         # define the model
         model = CNNr() 
-        
         # train model
-        for k in range(nround):
-            losses[i,k] = train(model.train(), train_input, train_target, mini_batch_size)
-            losses_val[i,k] = get_loss_val(model.eval(),val_input,val_target)
+        losses[i,:],losses_val[i,:] = train(model, train_input, train_target,val_input, val_target, mini_batch_size,nb_epochs=nb_epochs)
         model = model.eval()
         train_accuracy = accuracy(model(train_input),train_target)
         test_accuracy = accuracy(model(test_input),test_target)

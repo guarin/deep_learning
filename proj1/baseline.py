@@ -25,10 +25,12 @@ class MLP(nn.Module):
         return x
     
     
-def train(model, train_input, train_target, mini_batch_size, verbose = False):
+def train(model, train_input, train_target,val_input, val_target, mini_batch_size, nb_epochs = 25,verbose = False):
+    losses = np.zeros(nb_epochs)
+    val_losses = np.zeros(nb_epochs)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
-    for e in range(25):
+    for e in range(nb_epochs):
         sum_loss = 0
         for b in range(0, train_input.size(0), mini_batch_size):
             optimizer.zero_grad()
@@ -39,7 +41,10 @@ def train(model, train_input, train_target, mini_batch_size, verbose = False):
             optimizer.step()
         if verbose:
             print(e,sum_loss)
-    return sum_loss
+        losses[e] = sum_loss
+        val_losses[e] = get_loss_val(model.eval(), val_input, val_target)
+    return losses,val_losses
+
     
 def get_loss_val(model, val_input,val_target):
     criterion = nn.CrossEntropyLoss()
@@ -50,24 +55,22 @@ def accuracy(model, inputs, targets):
     preds = model(inputs)
     return (preds.argmax(axis=1) == targets).long().sum().item() / targets.shape[0]
 
-def train_all(train_input, train_target, train_classes, val_input, val_target, val_classes,test_input, test_target, test_classes, niter = 15, nround = 25,mini_batch_size = 100):
+def train_all(train_input, train_target, train_classes, val_input, val_target, val_classes,test_input, test_target, test_classes, niter = 15, nb_epochs = 25,mini_batch_size = 100):
     accuracies_train = []
     accuracies_test = []
     accuracies_val = []
-    losses = np.zeros((15,25))
-    losses_val = np.zeros((15,25))
+    losses = np.zeros((niter,nb_epochs))
+    losses_val = np.zeros((niter,nb_epochs))
     # flatten
     train_input = train_input.view(train_input.size(0), -1)
     test_input = test_input.view(test_input.size(0), -1)
     val_input = val_input.view(val_input.size(0), -1)
-    for i in range(15):
+    for i in range(niter):
         print("-"*50,f" \n Iteration {i} \n ")   
         # define the model
         model = MLP() 
         # train model
-        for k in range(25):
-            losses[i,k] = train(model.train(), train_input, train_target, mini_batch_size)
-            losses_val[i,k] = get_loss_val(model.eval(), val_input,val_target)
+        losses[i,:],losses_val[i,:] = train(model, train_input, train_target,val_input, val_target, mini_batch_size,nb_epochs=nb_epochs)
         print(f"Baseline Training accuracy is {accuracy(model,train_input,train_target)} ")
         test_accuracy = accuracy(model,test_input,test_target)
         train_accuracy = accuracy(model,train_input,train_target)

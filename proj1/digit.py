@@ -4,7 +4,7 @@ from torch.nn import functional as F
 from torch import optim
 
 class BaseNet(nn.Module):
-    # First network only for number classification task
+    # Basic Network only for number classification task
     def __init__(self):
         super(BaseNet, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
@@ -21,8 +21,9 @@ class BaseNet(nn.Module):
         x = self.fc3(x)
         return x
     
-######################################################################################
 
+# Auxiliary Loss helper function
+# -----------------------------------------------------------------------------------
 def aux_loss(output_1,output_2,classes,criterion):
     # loss of prediction of the two number
     loss_1 = criterion(output_1, classes[:,0])
@@ -86,7 +87,7 @@ def accuracy(model, inputs, targets):
     return accuracy 
 
 
-######################################################################################
-
+# Get Model function
+# -----------------------------------------------------------------------------------
 def get_model():
     return BaseNet()

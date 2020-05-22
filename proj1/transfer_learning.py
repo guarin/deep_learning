@@ -30,7 +30,6 @@ class Full_Net(nn.Module):
     # Second network to be initialized with Base Network, to correctly predict binary target
     def __init__(self):
         super(Full_Net, self).__init__()
-        # Layers
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3)
         self.fc1 = nn.Linear(256, 120)
@@ -42,6 +41,7 @@ class Full_Net(nn.Module):
 
     def forward(self, x):
         y = []
+        # treat images separately
         for i in range(2):
             h1 = F.relu(F.max_pool2d(self.conv1(x[:,i,:,:].view(x.size(0),1,14,14)), kernel_size=2), inplace=True)
             h1 = F.dropout2d(h1, 0.3)
@@ -128,5 +128,7 @@ def accuracy(model, inputs, targets):
     return (model[1](inputs).argmax(axis=1) == targets).long().sum().item() / targets.shape[0]
 
 
+# Get Model function
+# -----------------------------------------------------------------------------------
 def get_model():
     return BaseNet(), Full_Net()

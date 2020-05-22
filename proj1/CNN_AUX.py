@@ -5,17 +5,18 @@ from torch import optim
 
 
 class CNN_aux(nn.Module):
-    # siamese CNN with shared weights and dropout regularization
+    # CNN with shared weights and dropout regularization
+    # Additional Model output the digit predictions to introduce auxiliary loss in training
     def __init__(self):
         super(CNN_aux, self).__init__()
-        #Layers image 1
+        # Layers for each image
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3)
         self.fc1 = nn.Linear(256, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
 
-        #Combining layers
+        # Combining layers
         self.lin4 = nn.Linear(168,20)
         self.lin5 = nn.Linear(20,2)
 
@@ -34,7 +35,7 @@ class CNN_aux(nn.Module):
             h5 = self.fc3(h4)
             y.append(h5)
 
-        # Classifiction
+        # Classification
         y1 = F.relu(self.lin4(torch.cat((z[0].view(-1, 84), z[1].view(-1, 84)), 1)), inplace=True)
         y2 = self.lin5(y1)
         return [y2, y[0], y[1]]
@@ -91,5 +92,7 @@ def accuracy(model, inputs, targets):
     return (model(inputs)[0].argmax(axis=1) == targets).long().sum().item() / targets.shape[0]
 
 
+# Get Model function
+# -----------------------------------------------------------------------------------
 def get_model():
     return CNN_aux()

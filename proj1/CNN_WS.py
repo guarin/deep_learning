@@ -4,16 +4,16 @@ from torch.nn import functional as F
 from torch import optim
 
 class CNNrws(nn.Module):
-    # siamese CNN with shared weights and dropout regularization
+    # CNN with shared weights and dropout regularization
     def __init__(self):
         super(CNNrws, self).__init__()
-        #Layers image
+        # Layers per image
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3)
         self.fc1 = nn.Linear(256, 120)
         self.fc2 = nn.Linear(120, 84)
 
-        #Combining layers
+        # Combining layers
         self.lin4 = nn.Linear(168,20)
         self.lin5 = nn.Linear(20,2)
 
@@ -82,5 +82,7 @@ def accuracy(model, inputs, targets):
     return (model(inputs).argmax(axis=1) == targets).long().sum().item() / targets.shape[0]
 
 
+# Get Model function
+# -----------------------------------------------------------------------------------
 def get_model():
     return CNNrws()

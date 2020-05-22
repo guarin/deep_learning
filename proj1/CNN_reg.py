@@ -79,5 +79,7 @@ def accuracy(model, inputs, targets):
     return (model(inputs).argmax(axis=1) == targets).long().sum().item() / targets.shape[0]
 
 
+# Get Model function
+# -----------------------------------------------------------------------------------
 def get_model():
     return CNNr()

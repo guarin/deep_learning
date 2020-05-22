@@ -77,5 +77,8 @@ def accuracy(model, inputs, targets):
     preds = model(inputs)
     return (preds.argmax(axis=1) == targets).long().sum().item() / targets.shape[0]
 
+
+# Get Model function
+# -----------------------------------------------------------------------------------
 def get_model():
     return MLP()

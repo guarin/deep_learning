@@ -7,6 +7,7 @@ import digit as dig
 import transfer_learning as tl
 import torch
 
+
 def load_data(n):
     train_input, train_target, train_classes, test_input, test_target, test_classes = prologue.generate_pair_sets(n)
     mu, std = train_input.mean(), train_input.std()
@@ -14,37 +15,36 @@ def load_data(n):
     test_input.sub_(mu).div_(std)
     return train_input, train_target, train_classes, test_input, test_target, test_classes
 
-def load_test_data():
-    train_input, train_target, train_classes, test_input, test_target, test_classes = load_data(1000)
-    val_input = test_input[:500]
-    test_input = test_input[500:]
-    val_target = test_target[:500]
-    test_target = test_target[500:]
-    val_classes = test_classes[:500]
-    test_classes = test_classes[500:]
-    return train_input, train_target, train_classes,val_input,test_input,val_target,test_target,val_classes,test_classes
+
+def train_all(architecture,train_input, train_target, train_classes, test_input, test_target, test_classes, niter = 15, nb_epochs = 25, mini_batch_size = 100):
+    print("-" * 50, f" \n Iterations {niter}, {architecture[1]}")
+    accuracies_train, accuracies_test = torch.zeros(niter), torch.zeros(niter)
+
+    for i in range(niter):
+        model = architecture[0].get_model()
+        # train model
+        architecture[0].train(model, train_input, train_target, train_classes, mini_batch_size, nb_epochs=nb_epochs, verbose = False)
+
+        accuracies_train[i] = architecture[0].accuracy(model,train_input,train_target)
+        accuracies_test[i] = architecture[0].accuracy(model,test_input,test_target)
+
+    print(f"The mean train accuracy of the {architecture[1]} is {accuracies_train.mean():.4f} ± {accuracies_train.var():.4f} ")
+    print(f"The mean test accuracy of the {architecture[1]} is {accuracies_test.mean():.4f} ± {accuracies_test.var():.4f} ")
+
 
 def run_models():
     torch.manual_seed(42)
-    train_input, train_target, train_classes,val_input,test_input,val_target,test_target,val_classes,test_classes = (
-        load_test_data()
-    )
+    train_input, train_target, train_classes, test_input, test_target, test_classes = (load_data(1000))
 
-    architectures = [(cnn, "CNN"), (ws, "CNN with weight sharing"),
-                     (tl, "Transfer learning"), (dig, "Digit prediction")]
+    architectures = [(bl, "Baseline Model"),
+                     (cnn, "CNN Model"),
+                     (ws, "CNN Weight Sharing Model"),
+                     (aux, "CNN Auxiliary Loss Model"),
+                     (tl, "Transfer learning Model"),
+                     (dig, "Digit Classification Model")]
 
-    print("Baseline " + "accuracies")
-    bl.train_all(train_input, train_target, train_classes, val_input, val_target, val_classes, test_input,
-                               test_target, test_classes, nb_epochs=25)
-
-    for (architecture, arch_name) in architectures:
-        print(arch_name+" accuracies")
-        architecture.train_all(train_input, train_target, train_classes,val_input, val_target, val_classes, test_input,
-                                   test_target, test_classes,nb_epochs=25)
-
-    print("Auxiliary Loss " + "accuracies")
-    aux.train_all(train_input, train_target, train_classes, val_input, val_target, val_classes, test_input,
-                               test_target, test_classes, nb_epochs=25)
+    for architecture in architectures:
+        train_all(architecture, train_input, train_target, train_classes, test_input, test_target, test_classes, nb_epochs=25)
 
 if __name__ == "__main__":
     print('Training 6 different architectures, this may take some time')

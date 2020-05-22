@@ -44,7 +44,7 @@ class Full_Net(nn.Module):
         y = []
         for i in range(2):
             h1 = F.relu(F.max_pool2d(self.conv1(x[:,i,:,:].view(x.size(0),1,14,14)), kernel_size=2), inplace=True)
-            h2 = F.dropout2d(h1, 0.3)
+            h1 = F.dropout2d(h1, 0.3)
             h2 = F.relu(F.max_pool2d(self.conv2(h1), kernel_size=2, stride=2), inplace=True)
             h2 = F.dropout2d(h2, 0.3)
             h3 = F.relu(self.fc1(h2.view((-1, 256))), inplace=True)
@@ -57,14 +57,28 @@ class Full_Net(nn.Module):
         return y2
 
 
-def train(model1, model2, train_input, train_target, train_class, val_input, val_target, val_classes, mini_batch_size, nb_epochs=25, verbose=False):
-    losses = torch.zeros(nb_epochs)
-    val_losses = torch.zeros(nb_epochs)
+# Training function
+# -----------------------------------------------------------------------------------
+def train(model, train_input, train_target, train_classes, mini_batch_size, nb_epochs=25, verbose=False):
+    """
+    Train the model
+    Params:
+    model 	        : defined network
+    train_input     : train input data
+    train_target    : train target data
+    train_classes   : train digit classes
+    minibatch_size  : size of each minibatch
+    np_epochs       : number of epochs to train the model (default 25)
+    verbose         : verbosity of training routine
+    Returns:
+    None, the model is trained inplace.
+    """
+    model1, model2 = model
     criterion = nn.CrossEntropyLoss()
     optimizer1 = optim.Adam(model1.parameters(), lr=1e-3)
 
     train_input_ = torch.cat((train_input[:, 0, :, :], train_input[:, 1, :, :]))
-    train_target_ = torch.cat((train_class[:, 0], train_class[:, 1]))
+    train_target_ = torch.cat((train_classes[:, 0], train_classes[:, 1]))
 
     for e in range(nb_epochs):
         sum_loss = 0
@@ -98,60 +112,21 @@ def train(model1, model2, train_input, train_target, train_class, val_input, val
         if verbose:
             print(e, sum_loss)
 
-        losses[e] = sum_loss
-        val_losses[e] = get_loss_val(model2.eval(), val_input, val_target)
-    return losses, val_losses
+
+# Accuracy function
+# -----------------------------------------------------------------------------------
+def accuracy(model, inputs, targets):
+    """ INPUT:
+        - model: model that predicts the digit values
+        - inputs: the input to be predicted
+        - targets: ground truth of the pairs comparison
+        OUTPUT:
+        - accuracy: Percentage score of correct predictions
+    """
+    model[0].eval()
+    model[1].eval()
+    return (model[1](inputs).argmax(axis=1) == targets).long().sum().item() / targets.shape[0]
 
 
-def get_loss_val(model, val_input, val_target):
-    criterion = nn.CrossEntropyLoss()
-    pred = model(val_input)
-    return criterion(pred, val_target)
-
-def accuracy(preds, targets):
-    return (preds.argmax(axis=1) == targets).long().sum().item() / targets.shape[0]
-
-def get_mis_class_aux(model, input_, target, classes):
-    preds = model(input_)
-    preds = preds.argmax(axis=1) == target
-    misclassified = classes[~preds]
-    return misclassified.tolist()
-
-def train_all(train_input, train_target, train_classes, val_input, val_target, val_classes, test_input, test_target,
-              test_classes, niter=15, nb_epochs=25, mini_batch_size=100):
-    all_classified = []
-    misclassified = []
-    accuracies_train = []
-    accuracies_test = []
-    accuracies_val = []
-    losses = torch.zeros((niter, nb_epochs))
-    losses_val = torch.zeros((niter, nb_epochs))
-
-    for i in range(niter):
-        print("-" * 50, f" \n Iteration {i} \n ")
-
-        # define the model
-        model1 = BaseNet()
-        model2 = Full_Net()
-
-        # train model
-        losses[i, :], losses_val[i, :] = train(model1.train(), model2.train(), train_input,train_target,train_classes,
-                                               val_input, val_target,val_classes,mini_batch_size, nb_epochs=nb_epochs)
-        model = model2.eval()
-        train_accuracy = accuracy(model(train_input), train_target)
-        test_accuracy = accuracy(model(test_input), test_target)
-        val_accuracy = accuracy(model(val_input), val_target)
-
-        misclass = get_mis_class_aux(model, torch.cat((test_input, val_input)), torch.cat((test_target, val_target)),
-                                 torch.cat((test_classes, val_classes)))
-        [all_classified.append(x) for x in torch.cat((test_classes, val_classes))]
-        [misclassified.append(x) for x in misclass]
-        accuracies_train.append(train_accuracy)
-        accuracies_test.append(test_accuracy)
-        accuracies_val.append(val_accuracy)
-
-        print(f"Training accuracy is {train_accuracy} ")
-        print(f"Validation accuracy is {val_accuracy} ")
-        pytorch_total_params = sum(p.numel() for p in model.parameters())
-    print(pytorch_total_params)
-    return losses, losses_val, accuracies_train, accuracies_test, accuracies_val, all_classified, misclassified
+def get_model():
+    return BaseNet(), Full_Net()

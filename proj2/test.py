@@ -6,23 +6,23 @@ import torch
 
 def test_network():
     return nn.Sequential(
-        nn.Linear(2, 25, initilization='He'),
+        nn.Linear(2, 25, initialization='He'),
         nn.ReLU(),
-        nn.Linear(25, 25, initilization='He'),
+        nn.Linear(25, 25, initialization='He'),
         nn.ReLU(),
-        nn.Linear(25, 2, initilization='He')
+        nn.Linear(25, 2, initialization='He')
     )
 
 
 def test_network_dropout():
     return nn.Sequential(
-        nn.Linear(2, 25, initilization='He'),
+        nn.Linear(2, 25, initialization='He'),
         nn.ReLU(),
         nn.Dropout(),
-        nn.Linear(25, 25, initilization='He'),
+        nn.Linear(25, 25, initialization='He'),
         nn.ReLU(),
         nn.Dropout(),
-        nn.Linear(25, 2, initilization='He')
+        nn.Linear(25, 2, initialization='He')
     )
 
 
@@ -78,4 +78,4 @@ def run_test(n_samples=1000, grad=False, show_plot=True, save_plot=False, data_s
 
 
 if __name__ == '__main__':
-    run_test()
+    run_test(show_plot=False)

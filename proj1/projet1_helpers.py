@@ -65,3 +65,13 @@ def load_data(n):
     train_input.sub_(mu).div_(std)
     test_input.sub_(mu).div_(std)
     return train_input, train_target, train_classes, test_input, test_target, test_classes
+
+def load_test_data():
+    train_input, train_target, train_classes, test_input, test_target, test_classes = load_data(1000)
+    val_input = test_input[:500]
+    test_input = test_input[500:]
+    val_target = test_target[:500]
+    test_target = test_target[500:]
+    val_classes = test_classes[:500]
+    test_classes = test_classes[500:]
+    return train_input, train_target, train_classes,val_input,test_input,val_target,test_target,val_classes,test_classes

@@ -2,34 +2,23 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from torch import optim
-import numpy as np
-import matplotlib.pyplot as plt
 
-
-class LeNetLike(nn.Module):
-    """ Modified LeNet. Takes input format 1 x 14 x 14 and outputs the class"""
+class BaseNet(nn.Module):
+    # First network only for number classification task
     def __init__(self):
-        super(LeNetLike, self).__init__()
-        self.features = nn.Sequential(
-            nn.Conv2d(1, 6, kernel_size = 3),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Conv2d(6, 16, kernel_size = 3),
-            nn.ReLU(),
-)
-        self.classifier = nn.Sequential(
-            nn.Linear(256, 120),
-            nn.ReLU(inplace=True),
-            nn.Linear(120, 84),
-            nn.ReLU(inplace=True),
-            nn.Linear(84, 62),
-            nn.ReLU(inplace=True),
-            nn.Linear(62, 10)
-)
-    def forward(self, inputs):
-        x = self.features(inputs)
-        x = x.view(x.size(0), -1)
-        x = self.classifier(x)
+        super(BaseNet, self).__init__()
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3)
+        self.fc1 = nn.Linear(256, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
+
+    def forward(self, x):
+        x = F.relu(F.max_pool2d(self.conv1(x.view(-1,1,14,14)), kernel_size=2, stride=2))
+        x = F.relu(F.max_pool2d(self.conv2(x), kernel_size=2, stride=2))
+        x = F.relu(self.fc1(x.view((-1, 256))))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
         return x
     
 ######################################################################################
@@ -44,8 +33,8 @@ def aux_loss(output_1,output_2,classes,criterion):
 ######################################################################################
 
 def train(model, train_input, train_classes,val_input, val_classes, mini_batch_size,nb_epochs=25, verbose = False):
-    losses = np.zeros(nb_epochs)
-    val_losses = np.zeros(nb_epochs)
+    losses = torch.zeros(nb_epochs)
+    val_losses = torch.zeros(nb_epochs)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=5e-4)
     for e in range(nb_epochs):
@@ -114,14 +103,14 @@ def train_all(train_input, train_target, train_classes, val_input, val_target, v
     accuracies_test = []
     accuracies_val = []
     
-    losses = np.zeros((niter,nb_epochs))
-    losses_val = np.zeros((niter,nb_epochs))
+    losses = torch.zeros((niter,nb_epochs))
+    losses_val = torch.zeros((niter,nb_epochs))
 
     for i in range(niter):
         print("-"*50,f" \n Iteration {i} \n ")
 
         # define the model
-        model =  LeNetLike() 
+        model =  BaseNet()
 
         # train model
 
@@ -141,4 +130,4 @@ def train_all(train_input, train_target, train_classes, val_input, val_target, v
         print(f"Training accuracy is {train_accuracy} ")
         print(f"Validation accuracy is {val_accuracy} ")
     
-    return losses, losses_val, accuracies_train, accuracies_test, accuracies_val,all_classified,misclassified,misbool 
+    return losses, losses_val, accuracies_train, accuracies_test, accuracies_val,all_classified,misclassified

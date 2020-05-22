@@ -2,7 +2,6 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from torch import optim
-import numpy as np
 
 class CNNr(nn.Module):
     """ Modified LeNet. Takes input format 2 x 14 x 14 and outputs if the first digit is smaller than the first"""
@@ -10,11 +9,11 @@ class CNNr(nn.Module):
         super(CNNr, self).__init__()
         self.features = nn.Sequential(
             nn.Conv2d(2, 32, kernel_size = 3),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Dropout2d(p=0.3),
             nn.Conv2d(32, 64, kernel_size = 3),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Dropout2d(p=0.3)
 )
@@ -34,8 +33,8 @@ class CNNr(nn.Module):
         return x 
     
 def train(model, train_input, train_target,val_input, val_target, mini_batch_size, nb_epochs = 25,verbose = False):
-    losses = np.zeros(nb_epochs)
-    val_losses = np.zeros(nb_epochs)
+    losses = torch.zeros(nb_epochs)
+    val_losses = torch.zeros(nb_epochs)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     for e in range(nb_epochs):
@@ -73,8 +72,8 @@ def train_all(train_input, train_target, train_classes, val_input, val_target, v
     accuracies_train = []
     accuracies_test = []
     accuracies_val = []
-    losses = np.zeros((niter, nb_epochs))
-    losses_val = np.zeros((niter, nb_epochs))
+    losses = torch.zeros((niter, nb_epochs))
+    losses_val = torch.zeros((niter, nb_epochs))
     for i in range(niter):
         print("-"*50,f" \n Iteration {i} \n ")
 

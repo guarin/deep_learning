@@ -2,7 +2,6 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from torch import optim
-import numpy as np
 
 class MLP(nn.Module):
     """ Modified LeNet. Takes input format 2 x 14 x 14"""
@@ -26,8 +25,8 @@ class MLP(nn.Module):
     
     
 def train(model, train_input, train_target,val_input, val_target, mini_batch_size, nb_epochs = 25,verbose = False):
-    losses = np.zeros(nb_epochs)
-    val_losses = np.zeros(nb_epochs)
+    losses = torch.zeros(nb_epochs)
+    val_losses = torch.zeros(nb_epochs)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     for e in range(nb_epochs):
@@ -59,8 +58,8 @@ def train_all(train_input, train_target, train_classes, val_input, val_target, v
     accuracies_train = []
     accuracies_test = []
     accuracies_val = []
-    losses = np.zeros((niter,nb_epochs))
-    losses_val = np.zeros((niter,nb_epochs))
+    losses = torch.zeros((niter,nb_epochs))
+    losses_val = torch.zeros((niter,nb_epochs))
     # flatten
     train_input = train_input.view(train_input.size(0), -1)
     test_input = test_input.view(test_input.size(0), -1)

@@ -2,14 +2,12 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from torch import optim
-import numpy as np
-
 
 class CNNrws(nn.Module):
     # siamese CNN with shared weights and dropout regularization
     def __init__(self):
         super(CNNrws, self).__init__()
-        #Layers image 1
+        #Layers image
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3)
         self.fc1 = nn.Linear(256, 120)
@@ -20,36 +18,26 @@ class CNNrws(nn.Module):
         self.lin5 = nn.Linear(20,2)
 
     def forward(self, x):
-        # Image 1 class
-        h1a = F.relu(F.max_pool2d(self.conv1(x[:,0,:,:].view(x.size(0),1,14,14)), kernel_size=2))
-        h1a = F.dropout2d(h1a, 0.3)
-        h2a = F.relu(F.max_pool2d(self.conv2(h1a), kernel_size=2, stride=2))
-        h2a = F.dropout2d(h2a, 0.3)
-        h3a = F.relu(self.fc1(h2a.view((-1, 256))))
-        h3a = F.dropout(h3a, 0.3)
-        h4a = F.relu(self.fc2(h3a))
-        h4a = F.dropout(h4a, 0.3)
+        y = []
+        for i in range(2):
+            h1 = F.relu(F.max_pool2d(self.conv1(x[:,i,:,:].view(x.size(0),1,14,14)), kernel_size=2), inplace=True)
+            h1 = F.dropout2d(h1, 0.3)
+            h2 = F.relu(F.max_pool2d(self.conv2(h1), kernel_size=2, stride=2), inplace=True)
+            h2 = F.dropout2d(h2, 0.3)
+            h3 = F.relu(self.fc1(h2.view((-1, 256))), inplace=True)
+            h3 = F.dropout(h3, 0.3)
+            h4 = F.relu(self.fc2(h3), inplace=True)
+            h4 = F.dropout(h4, 0.3)
 
+            y.append(h4)
 
-        # Image 2 class
-        h1b = F.relu(F.max_pool2d(self.conv1(x[:,1,:,:].view(x.size(0),1,14,14)), kernel_size=2))
-        h1b = F.dropout2d(h1b, 0.3)
-        h2b = F.relu(F.max_pool2d(self.conv2(h1b), kernel_size=2, stride=2))
-        h2b = F.dropout2d(h2b, 0.3)
-        h3b = F.relu((self.fc1(h2b.view(-1,256))))
-        h3b = F.dropout(h3b, 0.3)
-        h4b = F.relu(self.fc2(h3b))
-        h4b = F.dropout(h4b, 0.3)
-
-
-        # Classifiction
-        y1 = F.relu(self.lin4(torch.cat((h4a.view(-1, 84), h4b.view(-1, 84)), 1)))
+        y1 = F.relu(self.lin4(torch.cat((y[0].view(-1, 84), y[1].view(-1, 84)), 1)), inplace=True)
         y2 = self.lin5(y1)
         return y2
 
 def train(model, train_input, train_target,val_input,val_target, mini_batch_size, nb_epochs=25, verbose=False):
-    losses = np.zeros(nb_epochs)
-    val_losses = np.zeros(nb_epochs)
+    losses = torch.zeros(nb_epochs)
+    val_losses = torch.zeros(nb_epochs)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     for e in range(nb_epochs):
@@ -92,8 +80,8 @@ def train_all(train_input, train_target, train_classes, val_input, val_target, v
     accuracies_train = []
     accuracies_test = []
     accuracies_val = []
-    losses = np.zeros((niter, nb_epochs))
-    losses_val = np.zeros((niter, nb_epochs))
+    losses = torch.zeros((niter, nb_epochs))
+    losses_val = torch.zeros((niter, nb_epochs))
 
     for i in range(niter):
         print("-" * 50, f" \n Iteration {i} \n ")

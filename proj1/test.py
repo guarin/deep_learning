@@ -6,6 +6,8 @@ import CNN_AUX as aux
 import digit as dig
 import transfer_learning as tl
 import torch
+import sys
+import argparse
 
 
 # Load Data function
@@ -83,5 +85,5 @@ def run_models():
 
 
 if __name__ == "__main__":
-    print('Training 6 different architectures, this may take some time')
+    print('Training 6 different architectures 15 times with 25 epochs, this may take some time')
     run_models()
